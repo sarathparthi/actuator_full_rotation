@@ -1,0 +1,109 @@
+#include <Arduino.h>
+
+// Pin assignments for the first motor
+int Step1 = 3; // Step pin for motor 1
+int Dire1 = 2; // Direction pin for motor 1
+int Sleep1 = 4; // Sleep pin for motor 1
+int MS1_1 = 7; // MS1 for motor 1
+int MS2_1 = 6; // MS2 for motor 1
+int MS3_1 = 5; // MS3 for motor 1
+
+// Pin assignments for the second motor
+int Step2 = 9; // Step pin for motor 2
+int Dire2 = 8; // Direction pin for motor 2
+int Sleep2 = 10; // Sleep pin for motor 2
+int MS1_2 = 12; // MS1 for motor 2
+int MS2_2 = 11; // MS2 for motor 2
+int MS3_2 = 13; // MS3 for motor 2
+
+// Motor Specs
+const int spr = 200; // Steps per revolution
+int RPM = 40; // Motor speed in revolutions per minute (slow for maximum torque)
+int Microsteps = 1; // Step size (1 for full steps for maximum torque)
+long step_delay; // Delay between each step in microseconds
+
+bool hasRotated = false; // Flag to ensure the rotation sequence runs only once
+
+void setup() {
+  Serial.begin(9600);
+
+  // Initialize pins for motor 1
+  pinMode(Step1, OUTPUT);
+  pinMode(Dire1, OUTPUT);
+  pinMode(Sleep1, OUTPUT);
+  pinMode(MS1_1, OUTPUT);
+  pinMode(MS2_1, OUTPUT);
+  pinMode(MS3_1, OUTPUT);
+
+  // Initialize pins for motor 2
+  pinMode(Step2, OUTPUT);
+  pinMode(Dire2, OUTPUT);
+  pinMode(Sleep2, OUTPUT);
+  pinMode(MS1_2, OUTPUT);
+  pinMode(MS2_2, OUTPUT);
+  pinMode(MS3_2, OUTPUT);
+
+  // Wake both drivers
+  digitalWrite(Sleep1, HIGH);
+  digitalWrite(Sleep2, HIGH);
+
+  // Set microstepping
+  setMicrostepping(MS1_1, MS2_1, MS3_1, Microsteps); // For motor 1
+  setMicrostepping(MS1_2, MS2_2, MS3_2, Microsteps); // For motor 2
+
+  // Calculate step delay based on RPM and steps per revolution
+  step_delay = (60L * 1000000L) / (spr * RPM);
+}
+
+void loop() {
+  if (!hasRotated) {
+    // Rotate motor 1 clockwise
+    Serial.println("Motor 1 rotating clockwise.");
+    digitalWrite(Dire1, HIGH); // Clockwise for motor 1
+    rotateMotorSteps(Step1, 2300); // Rotate motor 1
+    delay(5000); // Pause for 5 seconds
+
+    // Rotate motor 1 counter-clockwise
+    Serial.println("Motor 1 rotating counter-clockwise.");
+    digitalWrite(Dire1, LOW); // Counter-clockwise for motor 1
+    rotateMotorSteps(Step1, 2000); // Rotate motor 1
+    delay(5000); // Pause for 5 seconds
+
+    // Rotate motor 2 clockwise
+    Serial.println("Motor 2 rotating clockwise.");
+    digitalWrite(Dire2, HIGH); // Clockwise for motor 2
+    rotateMotorSteps(Step2, 1500); // Rotate motor 2
+    delay(5000); // Pause for 5 seconds
+
+    // Rotate motor 2 counter-clockwise
+    Serial.println("Motor 2 rotating counter-clockwise.");
+    digitalWrite(Dire2, LOW); // Counter-clockwise for motor 2
+    rotateMotorSteps(Step2, 1200); // Rotate motor 2
+    delay(5000); // Pause for 5 seconds
+
+    hasRotated = true; // Flag to stop further rotation
+  }
+
+  // After completion, the loop will stop
+  while (true) {
+    // Do nothing; keep the program running
+  }
+}
+
+// Function to rotate motors
+void rotateMotorSteps(int stepPin, int numSteps) {
+  for (int i = 0; i < numSteps; i++) {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(step_delay / 2); // Half delay for step
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(step_delay / 2); // Half delay for step
+  }
+}
+
+// Function to set microstepping
+void setMicrostepping(int MS1, int MS2, int MS3, int microsteps) {
+  // Set microstepping according to the microsteps value
+  digitalWrite(MS1, (microsteps & 0x1) ? HIGH : LOW);
+  digitalWrite(MS2, (microsteps & 0x2) ? HIGH : LOW);
+  digitalWrite(MS3, (microsteps & 0x4) ? HIGH : LOW);
+}
