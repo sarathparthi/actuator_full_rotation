@@ -1,0 +1,81 @@
+#include <ESP8266WiFi.h>
+#include <AccelStepper.h>
+#include <ESP8266WebServer.h>
+
+// Replace with your network credentials
+const char* ssid = "Gunaseelan";
+const char* password = "gunaseelan";
+
+// Web server running on port 80
+ESP8266WebServer server(80);
+
+// Define step constant: full step mode = 4
+#define FULLSTEP 4
+
+// ULN2003 Motor Driver Pins
+#define IN1 5  // D1 on NodeMCU
+#define IN2 4  // D2 on NodeMCU
+#define IN3 14 // D5 on NodeMCU
+#define IN4 12 // D6 on NodeMCU
+
+// Define relay pins
+#define solenoid_valve_pin 2 // D4 on NodeMCU
+#define vacuum_motor_pin 13  // D7 on NodeMCU
+
+const int stepsPerAction = 500; // Number of steps for each motor action
+
+// Create an instance of AccelStepper
+AccelStepper myStepper(FULLSTEP, IN1, IN3, IN2, IN4);
+
+unsigned long actionStartTime = 0;
+bool motorForwardDone = false;
+bool vacuumOn = false;
+bool motorReverseDone = false;
+bool waitDone = false;
+bool solenoidOn = false;
+bool sequenceStarted = false;
+bool solenoidOffDelayStarted = false;
+unsigned long solenoidStartTime = 0;
+
+void setup() {
+  Serial.begin(115200); 
+  // Start hardware serial communication on ESP8266
+
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  Serial.println("Connecting to WiFi...");
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println();
+  Serial.println("Connected to WiFi!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  // Stepper motor setup
+  myStepper.setMaxSpeed(1000); // Adjust speed as needed
+  myStepper.setAcceleration(100); // Adjust acceleration as needed
+
+  // Pin setup
+  pinMode(vacuum_motor_pin, OUTPUT);
+  pinMode(solenoid_valve_pin, OUTPUT);
+  digitalWrite(vacuum_motor_pin, LOW); // Start with vacuum pump OFF
+  digitalWrite(solenoid_valve_pin, LOW); // Start with solenoid valve OFF
+  
+  // Setup web server routes
+  server.on("/startSequence", []() {
+    server.send(200, "text/plain", "Sequence started");
+    Serial.println("Web request received: triggering sequence.");
+    Serial.println("BLINK");  // Send serial command to Arduino
+  });
+  
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void loop() {
+  server.handleClient();
+}
