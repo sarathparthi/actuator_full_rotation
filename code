@@ -60,13 +60,13 @@ void loop() {
     // Rotate motor 1 clockwise
     Serial.println("Motor 1 rotating clockwise.");
     digitalWrite(Dire1, HIGH); // Clockwise for motor 1
-    rotateMotorSteps(Step1, 2300); // Rotate motor 1
+    rotateMotorSteps(Step1, 1000); // Rotate motor 1
     delay(5000); // Pause for 5 seconds
 
     // Rotate motor 1 counter-clockwise
     Serial.println("Motor 1 rotating counter-clockwise.");
     digitalWrite(Dire1, LOW); // Counter-clockwise for motor 1
-    rotateMotorSteps(Step1, 2000); // Rotate motor 1
+    rotateMotorSteps(Step1, 1000); // Rotate motor 1
     delay(5000); // Pause for 5 seconds
 
     // Rotate motor 2 clockwise
