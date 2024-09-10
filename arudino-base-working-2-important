@@ -1,0 +1,90 @@
+#include <Arduino.h>
+
+int Step1 = 3;
+int Dire1 = 2;
+int Sleep1 = 4;
+int MS1_1 = 7;
+int MS2_1 = 6;
+int MS3_1 = 5;
+
+int Step2 = 9;
+int Dire2 = 8;
+int Sleep2 = 10;
+int MS1_2 = 12;
+int MS2_2 = 11;
+int MS3_2 = 13;
+
+const int spr = 200;
+int RPM = 40;
+int Microsteps = 1;
+long step_delay;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(Step1, OUTPUT);
+  pinMode(Dire1, OUTPUT);
+  pinMode(Sleep1, OUTPUT);
+  pinMode(MS1_1, OUTPUT);
+  pinMode(MS2_1, OUTPUT);
+  pinMode(MS3_1, OUTPUT);
+  pinMode(Step2, OUTPUT);
+  pinMode(Dire2, OUTPUT);
+  pinMode(Sleep2, OUTPUT);
+  pinMode(MS1_2, OUTPUT);
+  pinMode(MS2_2, OUTPUT);
+  pinMode(MS3_2, OUTPUT);
+
+  digitalWrite(Sleep1, HIGH);
+  digitalWrite(Sleep2, HIGH);
+
+  setMicrostepping(MS1_1, MS2_1, MS3_1, Microsteps);
+  setMicrostepping(MS1_2, MS2_2, MS3_2, Microsteps);
+
+  step_delay = (60L * 1000000L) / (spr * RPM);
+}
+
+void loop() {
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+
+    if (command == "BLINK") {
+      Serial.println("Received 'BLINK' command.");
+      // Perform the motor actions
+      Serial.println("Motor 1 rotating clockwise.");
+      digitalWrite(Dire1, HIGH);
+      rotateMotorSteps(Step1, 1000);
+      delay(5000);
+
+      Serial.println("Motor 1 rotating counter-clockwise.");
+      digitalWrite(Dire1, LOW);
+      rotateMotorSteps(Step1, 1000);
+      delay(5000);
+
+      Serial.println("Motor 2 rotating clockwise.");
+      digitalWrite(Dire2, HIGH);
+      rotateMotorSteps(Step2, 1500);
+      delay(5000);
+
+      Serial.println("Motor 2 rotating counter-clockwise.");
+      digitalWrite(Dire2, LOW);
+      rotateMotorSteps(Step2, 1200);
+      delay(5000);
+    }
+  }
+}
+
+void rotateMotorSteps(int stepPin, int numSteps) {
+  for (int i = 0; i < numSteps; i++) {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(step_delay / 2);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(step_delay / 2);
+  }
+}
+
+void setMicrostepping(int MS1, int MS2, int MS3, int microsteps) {
+  digitalWrite(MS1, (microsteps & 0x1) ? HIGH : LOW);
+  digitalWrite(MS2, (microsteps & 0x2) ? HIGH : LOW);
+  digitalWrite(MS3, (microsteps & 0x4) ? HIGH : LOW);
+}
